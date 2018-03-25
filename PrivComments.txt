@@ -1,0 +1,211 @@
+Hint: Use "Ctrl+F" to find the tag of the function.
+
+[Priv-C01]
+    /*
+     * Creates an empty BigInt with _byteLen bytes of space.
+     *
+     * Param:
+     *     _byteLen    -> (in) Length of the content byte array (which will be filled with zeros).
+     *     dummy       -> (in) Just for recognizing this constructor.
+     */
+
+[Priv-C02]
+    /*
+     * Creates a BigInt with the content _num.
+     *
+     * Params:
+     *     _num     -> (in/dangerous) Value of this BigInt WITHOUT copying.
+     *     _isNeg   -> (in) hether this BigInt should be negative.
+     *     _len     -> (in) Length of the content byte array.
+     *     copy     -> (in) Dummy place holder just for recognizing this constructor.
+     */
+
+[Priv-F01]
+    /*
+     * Creates a BigInt with the content _num.
+     *
+     * Params:
+     *     newNumber      -> (in/dangerous) New value of this BigInt WITHOUT copying.
+     *     newByteLen     -> (in) Length of the content byte array.
+     *     isNegative     -> (in) hether this BigInt should be negative.
+     */
+
+[Priv-F02]
+    /*
+     * Preforms absolute-value byte-wise addition of two byte arrays and stores the result into a third one.
+     *
+     * Params:
+     *     cand1      -> (in) The value of the first candidate, a.k.a augend.
+     *     len1       -> (in) Length of <cand1> in bytes.
+     *     cand2      -> (in) The value of the second candidate, a.k.a addends.
+     *     len2       -> (in) Length of <cand2> in bytes.
+     *     ret        -> (out) The byte array where the result will be stored in.
+     *     bLenOut    -> (in) Length of <ret> in bytes.
+     *     lenComp    -> (in) Whether <len1> is greater than <len2>.
+     */
+
+[Priv-F03]
+    /*
+     * Preforms absolute-value byte-wise negation of two byte arrays and stores the result into a third one. The first candidate MUST be greater than the second one.
+     *
+     * Params:
+     *     cand1      -> (in) The value of the first candidate, a.k.a. minuend.
+     *     len1       -> (in) Length of <cand1> in bytes, which MUST be NOT LESS than len2.
+     *     cand2      -> (in) The value of the second candidate, a.k.a subtrahend.
+     *     len2       -> (in) Length of <cand2> in bytes.
+     *     ret        -> (out) The byte array where the result will be stored in.
+     *     bLenOut    -> (in) Length of <ret> in bytes.
+     */
+
+[Priv-F04]
+    /*
+     * Preforms absolute-value byte-wise addition of two byte arrays and returns the result.
+     *
+     * Params:
+     *     cand1      -> (in) The value of the first candidate, a.k.a augend.
+     *     len1       -> (in) Length of <cand1> in bytes.
+     *     cand2      -> (in) The value of the second candidate, a.k.a addends.
+     *     len2       -> (in) Length of <cand2> in bytes.
+     *     bLenOut    -> (out) Length of the returned char array in bytes. This will be automatically calculated.
+     *
+     * Returns:
+     *     _ret       -> The byte array where the result is stored in, with it's length equals to <bLenOut>.
+     */
+
+[Priv-F05]
+    /*
+     * Preforms absolute-value byte-wise negation of two byte arrays and returns the result. The first candidate MUST be greater than the second one.
+     *
+     * Params:
+     *     cand1      -> (in) The value of the first candidate, a.k.a. minuend.
+     *     len1       -> (in) Length of <cand1> in bytes, which MUST be NOT LESS than len2.
+     *     cand2      -> (in) The value of the second candidate, a.k.a subtrahend.
+     *     len2       -> (in) Length of <cand2> in bytes.
+     *     bLenOut    -> (out) Length of the returned char array in bytes. This will be automatically calculated.
+     *
+     * Returns:
+     *     _ret       -> The byte array where the result is stored in, with it's length equals to <bLenOut>.
+     */
+
+[Priv-F06]
+    /*
+     * Shifts the input byte array by specific bits and returns the result as a NEW char array.
+     *
+     * Params:
+     *     offset     -> (in) Bits of the shifting. Positive values stand for left-shifting, and negative values stand for right-shifting.
+     *     cand1      -> (in) The value to be shifted.
+     *     len1       -> (in) Length of <cand1> in bytes.
+     *     bLenOut    -> (out) Length of the returned char array in bytes. This will be automatically calculated.
+     *
+     * Returns:
+     *     _ret       -> The byte array where the result is stored in, with it's length equals to <bLenOut>.
+     */
+
+[Priv-F07]
+    /*
+     * Multiplies two byte arrays and returns the result.
+     *
+     * Params:
+     *     cand1      -> (in) The value of the first candidate, a.k.a multiplier.
+     *     len1       -> (in) Length of <cand1> in bytes.
+     *     cand2      -> (in) The value of the second candidate, a.k.a multiplicand.
+     *     len2       -> (in) Length of <cand2> in bytes.
+     *     bLenOut    -> (out) Length of the returned char array in bytes. This will be automatically calculated.
+     *
+     * Returns:
+     *     _ret       -> The byte array where the result is stored in, with it's length equals to <bLenOut>.
+     */
+
+[Priv-F08]
+    /*
+     * Divides the third byte array by the first one and stores the result in the second one.
+     *
+     * Params:
+     *     divi        -> (in) The value of the divisor.
+     *     diviLen     -> (in) Length of <divi> in bytes. [<diviLen> + <qLen> - 1] MUST BE THE LENGTH OF THE <remain>!
+     *     quotient    -> (out) The value of the quotient.
+     *     qLen        -> (in) Length of <quotient> in bytes. [<diviLen> + <qLen> - 1] MUST BE THE LENGTH OF THE <remain>!
+     *     remain      -> (in/out) Passed into the function as the dividend, and stores the remainder when the function returns.
+     */
+
+[Priv-F09]
+    /*
+     * Divides this BigInt by the divisor and returns either the quotient or the remainder.
+     *
+     * Params:
+     *     divi        -> (in) The divisor.
+     *     bLenOut     -> (out) Length of the returned char array in bytes. This will be automatically calculated.
+     *     q_than_r    -> (out) Whether the function returns the quotient or the remainder.
+     *                      true  : returns the quotient;
+     *                      false : returns the remainder.
+     *
+     * Returns:
+     *     _ret        -> The byte array where the result is stored in, with it's length equals to <bLenOut>.
+     */
+
+[Priv-F10]
+    /*
+     * Whether the first byte array is greater in value than the second one.
+     *
+     * Params:
+     *     cand1      -> (in) The value of the first candidate.
+     *     cand2      -> (in) The value of the second candidate.
+     *     len        -> (in) Length of both <cand1> and <cand2> in bytes.
+     *     equal      -> (in/out) The bool value returned when two byte arrays are equal in values.
+     *
+     * Returns:
+     *     _ret       -> Whether the first candidate is greater than the second one, or <equal>.
+     */
+
+[Priv-F11]
+    /*
+     * Whether this BigInt is greater than the input one in absolute value.
+     *
+     * Param:
+     *     compare    -> (in) The value to be compared to.
+     *
+     * Returns:
+     *     _ret       -> Whether this BigInt is greater than the input one. Returns false when two values are equal.
+     */
+
+[Priv-F12]
+    /*
+     * Creates a array of char arrays storing the values of TENs left-shifted by 0 to 7 bits.
+     *  The result is used in generating decimal string output.
+     *
+     * Returns:
+     *     _ret    -> The returned values are listed below:
+     *                  [0] -> 10 << 0, 2 bytes in length.
+     *                  [1] -> 10 << 1, 2 bytes in length.
+     *                  [2] -> 10 << 2, 2 bytes in length.
+     *                  [3] -> 10 << 3, 2 bytes in length.
+     *                  [4] -> 10 << 4, 2 bytes in length.
+     *                  [5] -> 10 << 5, 2 bytes in length.
+     *                  [6] -> 10 << 6, 2 bytes in length.
+     *                  [7] -> 10 << 7, 2 bytes in length.
+     */
+
+[Priv-F13]
+    /*
+     * Creates a byte array, which may be used to create a BigInt object, storing the value parsed from a decimal string.
+     *
+     * Params:
+     *     decimalString    -> (in) The string represents the number in decimal.
+     *     len              -> (in) Length of the input string.
+     *     isNeg            -> (out) Whether the returned value should be negative.
+     *     retLen           -> (out) Length of the returned byte array.
+     *
+     * Returns:
+     *     _ret             -> The byte array storing the binary value of the input decimal string.
+     */
+
+[Priv-F14]
+    /*
+     * Allocate a chunk of memory of certain length and fill it with zeros.
+     *
+     * Param:
+     *     _len    -> (in) Length in bytes of the memory to be allocated.
+     *
+     * Returns:
+     *     _ret    -> The byte array with the length <_len> filled with zeros.
+     */
