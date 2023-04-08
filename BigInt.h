@@ -2,7 +2,7 @@
  * ----------------------------------------------------------------
  * BigInt.h
  * 
- * Copyright (c) Tangent65536, 2018. All Rights Reserved.
+ * Copyright (c) Tangent65536, 2018-2022. All Rights Reserved.
  * ----------------------------------------------------------------
  */
 
@@ -290,6 +290,8 @@ class BigInt
          */
         ~BigInt();
         
+        int getByteLength() const;
+
         /*
          * Set the value of this BigInt to be same as the input one and returns the new value.
          *  The returned value MAY NOT be set to any other value(s).
@@ -761,6 +763,8 @@ class BigInt
         const BigInt operator*(const int& mult) const;
         const BigInt operator/(const int& divi) const;
         const BigInt operator%(const int& divi) const;
+
+        const unsigned char *getRawBytes() const;
 };
 
 /*
@@ -773,20 +777,5 @@ const BigInt operator-(const int& nega, const BigInt& _this);
 const BigInt operator*(const int& mult, const BigInt& _this);
 const BigInt operator/(const int& divi, const BigInt& _this);
 const BigInt operator%(const int& divi, const BigInt& _this);
-
-/*
- * DO NOT ACCESS THIS FUNCTION IF YOU'RE NOT SURE ABOUT HAT YOU'RE DOING! THIS IS
- *  A DIRTY HACKERY AND CAN EASILY GO WRONG WHEN BEING USED INCORRECTLY!
- *
- * Casting a pointer of type <T1> to a pointer of type <T2>. The returned pointer
- *  still points to the same area/chunk of the memory.
- *
- * Param:
- *     _ptr    -> (in) The pointer to be casted.
- *
- * Returns:
- *     _ret    -> The casted pointer.
- */
-template <typename T1> T1* castPtr(auto _ptr);
 
 #endif

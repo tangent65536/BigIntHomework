@@ -2,7 +2,7 @@
  * ----------------------------------------------------------------
  * BigInt.cpp
  * 
- * Copyright (c) Tangent65536, 2018. All Rights Reserved.
+ * Copyright (c) Tangent65536, 2018-2022. All Rights Reserved.
  * 
  *  This is the implementation of the header "BigInt.h", providing
  *   basic big-integer computation functions. The data is stored
@@ -12,11 +12,7 @@
 
 #include <string.h>
 #include "BigInt.h"
-
-template <typename T1> T1* castPtr(auto _ptr)
-{
-	return static_cast<T1*>(static_cast<void*>(_ptr));
-}
+#include "internal_util.h"
 
 BigInt::BigInt()
 {
@@ -80,6 +76,11 @@ BigInt::~BigInt()
 	delete [] this->number;
 }
 
+int BigInt::getByteLength() const
+{
+	return this->byteLen;
+}
+
 // This WILL NOT copy the input data!
 void BigInt::setValues(unsigned char* newNumber, int newByteLen, bool newNegative)
 {
@@ -101,28 +102,28 @@ void BigInt::setValues(unsigned char* newNumber, int newByteLen, bool newNegativ
 
 void BigInt::byteWiseAdditionNoCopy(const unsigned char* cand1, int len1, const unsigned char* cand2, int len2, unsigned char* ret, int bLenOut)
 {
-	static unsigned short *cache = new unsigned short;
-	*cache = 0;
+	unsigned short cache = 0;
+	cache = 0;
 	
 	// Pointing to the lower byte in the short "cache".
-	static unsigned char *cPtr = castPtr<unsigned char>(cache);
+	unsigned char *cPtr = castPtr<unsigned char>(&cache);
 	
 	int i;
 	for(i = 0 ; i < len2 ; i++)
 	{
-		*cache += cand1[i];
-		*cache += cand2[i];
+		cache += cand1[i];
+		cache += cand2[i];
 		ret[i] = *cPtr;
 		// The carry (higher byte in the "cache") of this partial addition should be added into the next byte.
-		*cache >>= 8;
+		cache >>= 8;
 	}
 	
 	for(i = len2 ; i < len1 ; i++)
 	{
-		*cache += cand1[i];
+		cache += cand1[i];
 		ret[i] = *cPtr;
 		// The carry (higher byte in the "cache") of this partial addition should be added into the next byte.
-		*cache >>= 8;
+		cache >>= 8;
 	}
 	
 	if(bLenOut > len1)
@@ -149,34 +150,33 @@ unsigned char* BigInt::byteWiseAddition(const unsigned char* cand1, int len1, co
 
 void BigInt::byteWiseNegationNoCopy(const unsigned char* cand1, int len1, const unsigned char* cand2, int len2, unsigned char* ret, int bLenOut)
 {
-	static unsigned short *cache = new unsigned short;
-	*cache = 0;
+	unsigned short cache = 0;
 	
 	// Pointing to the lower byte in the short "cache".
-	static unsigned char *cPtr = castPtr<unsigned char>(cache);
-	static char temp = 0;
-	
+	unsigned char *cPtr = castPtr<unsigned char>(&cache);
+	char temp = 0;
+
 	int i;
 	// The input is made sure that cand1 > cand2 is always true.
 	for(i = 0 ; i < len2 ; i++)
 	{
-		*cache = cand1[i] - *cache;
-		*cache -= cand2[i];
+		cache = cand1[i] - cache;
+		cache -= cand2[i];
 		ret[i] = *cPtr;
 		
 		// The carry (higher byte in the "cache") of this partial addition should be added into the next byte.
 		// In this case, the "extra 1" that has to be negated in the next byte.
-		*cPtr = 0x100 - (*cache >>= 8);
+		*cPtr = 0x100 - (cache >>= 8);
 	}
 	
 	for(i = len2 ; i < len1 ; i++)
 	{
-		*cache = cand1[i] - *cache;
+		cache = cand1[i] - cache;
 		ret[i] = *cPtr;
 		
 		// The carry (higher byte in the "cache") of this partial addition should be added into the next byte.
 		// In this case, the "extra 1" that has to be negated in the next byte.
-		*cPtr = 0x100 - (*cache >>= 8);
+		*cPtr = 0x100 - (cache >>= 8);
 	}
 }
 
@@ -384,18 +384,18 @@ unsigned char* BigInt::multiplicationUtil(const unsigned char* cand1, int len1, 
 	
 	unsigned char* cacheVal = allocZerosMem(newLen);
 	
-	static unsigned short *cache = new unsigned short;
-	static unsigned char *cPtr = castPtr<unsigned char>(cache);
+	unsigned short cache = 0;
+	unsigned char *cPtr = castPtr<unsigned char>(&cache);
 	unsigned short space = 0;
 	for(int i = 0 ; i < len1 ; i++)
 	{
-		*cache = 0;
+		cache = 0;
 		for(int j = 0 ; j < len2 ; j++)
 		{
 			space = cand1[i];
-			*cache += space * cand2[j];
+			cache += space * cand2[j];
 			cacheVal[i + j] = *cPtr;
-			*cache >>= 8;
+			cache >>= 8;
 		}
 		cacheVal[i + len2] = *cPtr;
 		
@@ -433,10 +433,13 @@ void BigInt::divisionUtil(const unsigned char* divi, int diviLen, unsigned char*
 	for(int i = 0 ; i < 8 ; i++)
 	{
 		dividersCache[i] = shiftBits(i, divi, diviLen, dividersCacheLen[i]);
-		if(dividersCache[dividersCacheLen[i] - 1] == 0)
+
+		/*
+		if(dividersCache[i][dividersCacheLen[i] - 1] == 0)
 		{
 			dividersCacheLen[i]--;
 		}
+		*/
 	}
 	
 	// The division is implemented in binary format. Each byte contains 8 bits, or 8 binary 'digits'.
@@ -530,6 +533,7 @@ const BigInt& BigInt::operator+=(const BigInt& addi)
 		delete [] this->number;
 		this->number = new unsigned char[addi.numLen];
 		memcpy(this->number, addi.number, this->byteLen);
+		this->isNegative = addi.isNegative;
 		return *this;
 	}
 	else if(addi.numLen == 0)
@@ -664,42 +668,46 @@ const BigInt& BigInt::operator++()
 		delete [] this->number;
 		this->number = new unsigned char[1];
 		this->number[0] = 1;
-	}
-	if(this->isNegative)
-	{
-		byteWiseNegationNoCopy(this->number, this->numLen, ONE, 1, this->number, this->numLen);
-		
-		// When negating only by 1, we'd check if the leading byte is zero after the operation.
-		//  If it's zero, it means that the carry went all the way from the 0th order to the leading byte,
-		//  and "removed" that byte. Just like "010000 - 1 = 00FFFF".
-		if(this->number[this->numLen - 1] == 0)
-		{
-			this->numLen--;
-		}
+		this->isNegative = false;
 	}
 	else
 	{
-		byteWiseAdditionNoCopy(this->number, this->numLen, ONE, 1, this->number, this->numLen);
-		
-		// When adding only by 1, we'd check if the leading byte is zero after the operation.
-		//  If it's zero, it means that the carry went all the way from the 0th order to the leading byte,
-		//  and "overflow"ed that byte. Just like "FFFF + 1 = (01)0000". The "(01)" is the overflow.
-		if(this->number[this->numLen - 1] == 0)
+		if(this->isNegative)
 		{
-			// Extra space available
-			//  -> Do not create a new memory chunk and do crazy stuffs.
-			if(this->byteLen > this->numLen)
+			byteWiseNegationNoCopy(this->number, this->numLen, ONE, 1, this->number, this->numLen);
+		
+			// When negating only by 1, we'd check if the leading byte is zero after the operation.
+			//  If it's zero, it means that the carry went all the way from the 0th order to the leading byte,
+			//  and "removed" that byte. Just like "010000 - 1 = 00FFFF".
+			if(this->number[this->numLen - 1] == 0)
 			{
-				this->number[this->numLen] = 1;
-				this->numLen++;
+				this->numLen--;
 			}
-			else
+		}
+		else
+		{
+			byteWiseAdditionNoCopy(this->number, this->numLen, ONE, 1, this->number, this->numLen);
+		
+			// When adding only by 1, we'd check if the leading byte is zero after the operation.
+			//  If it's zero, it means that the carry went all the way from the 0th order to the leading byte,
+			//  and "overflow"ed that byte. Just like "FFFF + 1 = (01)0000". The "(01)" is the overflow.
+			if(this->number[this->numLen - 1] == 0)
 			{
-				unsigned char *old = this->number;
-				this->byteLen = ++(this->numLen); // ++nl, NOT nl++ !!!!!
-				this->number = new unsigned char[this->byteLen];
-				memcpy(this->number, old, this->numLen - 1); // copy all the zeros. :>
-				this->number[this->numLen - 1] = 1;
+				// Extra space available
+				//  -> Do not create a new memory chunk and do crazy stuffs.
+				if(this->byteLen > this->numLen)
+				{
+					this->number[this->numLen] = 1;
+					this->numLen++;
+				}
+				else
+				{
+					unsigned char *old = this->number;
+					this->byteLen = ++(this->numLen); // ++nl, NOT nl++ !!!!!
+					this->number = new unsigned char[this->byteLen];
+					memcpy(this->number, old, this->numLen - 1); // copy all the zeros. :>
+					this->number[this->numLen - 1] = 1;
+				}
 			}
 		}
 	}
@@ -718,34 +726,37 @@ const BigInt& BigInt::operator--()
 		this->number[0] = 1;
 		this->isNegative = true; // Set to -1;
 	}
-	if(this->isNegative)
-	{
-		byteWiseAdditionNoCopy(this->number, this->numLen, ONE, 1, this->number, this->numLen);
-		if(this->number[this->numLen - 1] == 0)
-		{
-			// Extra space available
-			//  -> Do not create a new memory chunk and do crazy stuffs.
-			if(this->byteLen > this->numLen)
-			{
-				this->number[this->numLen] = 1;
-				this->numLen++;
-			}
-			else
-			{
-				unsigned char *old = this->number;
-				this->byteLen = ++(this->numLen); // ++nl, NOT nl++ !!!!!
-				this->number = new unsigned char[this->numLen];
-				memcpy(this->number, old, this->numLen - 1);
-				this->number[this->numLen - 1] = 1;
-			}
-		}
-	}
 	else
 	{
-		byteWiseNegationNoCopy(this->number, this->numLen, ONE, 1, this->number, this->numLen);
-		if(this->number[this->numLen - 1] == 0)
+		if(this->isNegative)
 		{
-			this->numLen--;
+			byteWiseAdditionNoCopy(this->number, this->numLen, ONE, 1, this->number, this->numLen);
+			if(this->number[this->numLen - 1] == 0)
+			{
+				// Extra space available
+				//  -> Do not create a new memory chunk and do crazy stuffs.
+				if(this->byteLen > this->numLen)
+				{
+					this->number[this->numLen] = 1;
+					this->numLen++;
+				}
+				else
+				{
+					unsigned char *old = this->number;
+					this->byteLen = ++(this->numLen); // ++nl, NOT nl++ !!!!!
+					this->number = new unsigned char[this->numLen];
+					memcpy(this->number, old, this->numLen - 1);
+					this->number[this->numLen - 1] = 1;
+				}
+			}
+		}
+		else
+		{
+			byteWiseNegationNoCopy(this->number, this->numLen, ONE, 1, this->number, this->numLen);
+			if(this->number[this->numLen - 1] == 0)
+			{
+				this->numLen--;
+			}
 		}
 	}
 	return *this;
@@ -906,8 +917,8 @@ const BigInt BigInt::sqrt(bool ignoreNegative) const
 	int cacheLen, cacheShift, retIterLen;
 	unsigned char byteVal;
 	
-	static unsigned short* cache = new unsigned short;
-	static unsigned char* cPtr = castPtr<unsigned char>(cache);
+	unsigned short cache = 0;
+	unsigned char* cPtr = castPtr<unsigned char>(&cache);
 	unsigned short space = 0;
 	
 	while(byteIndex >= 0)
@@ -918,13 +929,13 @@ const BigInt BigInt::sqrt(bool ignoreNegative) const
 		
 			sqrtCache[byteIndex] += byteVal;
 		
-			*cache = 0;
+			cache = 0;
 			for(int j = byteIndex ; j <= sqrtHexLen + 1 ; j++)
 			{
 				space = sqrtCache[j];
-				*cache += space * byteVal;
+				cache += space * byteVal;
 				multCache[byteIndex + j] = *cPtr;
-				*cache >>= 8;
+				cache >>= 8;
 			}
 			
 			cacheLen = this->numLen - 2 * byteIndex;
@@ -1213,22 +1224,22 @@ unsigned char* BigInt::createFromDecimal(const char* decimalString, int len, boo
 
 	unsigned char* retVal = allocZerosMem(retLen);
 	
-	static unsigned char* digit = new unsigned char(0);
+	unsigned char* digit = new unsigned char(0);
 	
-	static unsigned short* cache = new unsigned short(0);
-	static unsigned char* cPtr = castPtr<unsigned char>(cache);
+	unsigned short cache = 0;
+	unsigned char* cPtr = castPtr<unsigned char>(&cache);
 	
-	static unsigned short space = 0;
+	unsigned short space = 0;
 	
 	for(int i = (isNeg ? 1 : 0) ; i < len ; i++)
 	{
-		*cache = 0;
+		cache = 0;
 		for(int j = 0 ; j < retLen ; j++)
 		{
 			space = retVal[j];
-			*cache += space * 10;
+			cache += space * 10;
 			retVal[j] = *cPtr;
-			*cache >>= 8;
+			cache >>= 8;
 		}
 		
 		if((*digit = (decimalString[i] - '0')) >= 10)
@@ -1314,6 +1325,11 @@ const BigInt BigInt::operator/(const int& rhs) const
 const BigInt BigInt::operator%(const int& rhs) const
 {
 	return *this % BigInt(rhs);
+}
+
+const unsigned char * BigInt::getRawBytes() const
+{
+	return this->number;
 }
 
 const BigInt operator+(const int& lhs, const BigInt& _this)
