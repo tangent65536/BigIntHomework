@@ -807,11 +807,11 @@ bool BigInt::operator>=(const BigInt& comp) const
 	else if(this->numLen != comp.numLen)
 	{
 		// Both negative -> if "this" is "shorter". Otherwise, reverse.
-		return (this->isNegative ^ (this->numLen < comp.numLen));
+		return (this->isNegative ^ (this->numLen > comp.numLen));
 	}
 	else
 	{
-		return byteWiseGreater(this->number, comp.number, true);
+		return byteWiseGreater(this->number, comp.number, this->numLen, true);
 	}
 }
 
@@ -830,11 +830,11 @@ bool BigInt::operator>(const BigInt& comp) const
 	else if(this->numLen != comp.numLen)
 	{
 		// Both positive -> if "this" is longer. Otherwise, reverse.
-		return (this->isNegative ^ (this->numLen < comp.numLen));
+		return (this->isNegative ^ (this->numLen > comp.numLen));
 	}
 	else
 	{
-		return byteWiseGreater(this->number, comp.number, false);
+		return byteWiseGreater(this->number, comp.number, this->numLen, false);
 	}
 }
 
